@@ -9,8 +9,6 @@
 %
 %   Requires the export_fig, CircStat, and CBrewer packages.
 
-addpath altmany-export_fig-5be2ca4 circstat-matlab-master cbrewer
-
 % plot toggles
 plot_polar_curves = 0;
 plot_tuning_curves = 1;
