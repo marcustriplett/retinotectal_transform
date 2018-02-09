@@ -7,32 +7,20 @@
 %   of direction-selective circuits in the optic tectum. "
 %   F. Abbas et al. (2017). Frontiers in Neural Circuits.
 %
-%   Requires the export_fig, CircStat, and CBrewer packages.
+%   Requires the CircStat, and CBrewer packages.
+
+addpath plot_tools
 
 % plot toggles
-plot_polar_curves = 0;
+plot_polar_curves = 1;
 plot_tuning_curves = 1;
 
-% load and normalise raw tuning curves
+% load raw tuning curves
 rgc_rfs = load('rgc_rfs.csv');
 [nr, nc] = size(rgc_rfs);
 rgc_rfs = [rgc_rfs; rgc_rfs(1, :)];
 
-for n = 1:nc
-    rgc_rfs(:, n) = normalise(rgc_rfs(:, n));
-end
-
-vm_rgcs = zeros(360, nc);
-rgc_params = zeros(nc, 2);
-kap_mod = [2, 1.3, 2];
-for n = 1:nc
-    [thetahat, kappa] = circ_vmpar(circ_ang2rad(0:30:330), rgc_rfs(1:12, n), circ_ang2rad(30));
-    kappa = kappa/kap_mod(n);
-    rgc_params(n, :) = [thetahat, kappa];
-    d = circ_vmpdf(circ_ang2rad(1:360), thetahat, kappa);
-    vm_rgcs(:, n) = d/max(d);
-end
-
+% circuit vars
 num_rgc = 3;
 num_sin = 3;
 num_pvn = 4;
@@ -54,7 +42,23 @@ FWHM = zeros(num_trials, 1);
 
 cols = {[56, 61, 150]/255, [231, 199, 31]/255, [70, 148, 73]/255, [94, 60, 108]/255};
 
-% One trial per circuit condition
+% normalise raw tuning curves
+for n = 1:nc
+    rgc_rfs(:, n) = normalise(rgc_rfs(:, n));
+end
+
+vm_rgcs = zeros(360, nc);
+rgc_params = zeros(nc, 2);
+kap_mod = [2, 1.3, 2];
+for n = 1:nc
+    [thetahat, kappa] = circ_vmpar(circ_ang2rad(0:30:330), rgc_rfs(1:12, n), circ_ang2rad(30));
+    kappa = kappa/kap_mod(n);
+    rgc_params(n, :) = [thetahat, kappa];
+    d = circ_vmpdf(circ_ang2rad(1:360), thetahat, kappa);
+    vm_rgcs(:, n) = d/max(d);
+end
+
+% one trial per circuit condition
 for trial = 1:5
     
     % load circuit architecture
@@ -119,6 +123,7 @@ for trial = 1:5
         right = [pd + 1:min(pd + 180, 360), 1:mod(pd + 180, 360)];
     end
     
+    % Compute FWHM
     minleftval = 1;
     minrightval = 1;
     minleft = 0;
@@ -145,6 +150,7 @@ for trial = 1:5
         FWHM(trial) = (360 - minleft) + minright;
     end
         
+    % Plotting  
     if plot_tuning_curves
         figure(trial);
         clf;
@@ -159,7 +165,6 @@ for trial = 1:5
         xlabel('Angle (degrees)')
         ylim([0, 0.3])
         xlim([0, 360])
-%         export_fig(sprintf('paper_figs/tc_circuit_%i', trial), '-pdf')
     end
     [pvn_pref_val, pvn_pref_ind] = max(response_p, [], 2);
     dsi_pvn = zeros(num_pvn, 1);
@@ -182,7 +187,6 @@ for trial = 1:5
             polarplot([response_p(pp, :), response_p(pp, 1)], 'LineWidth', 3, 'Color', cols{pp}); hold on;
         end
         box off;
-%         export_fig(sprintf('paper_figs/polar_circuit_%i', trial), '-pdf')
     end
 end
 
